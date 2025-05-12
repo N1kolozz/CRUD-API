@@ -13,17 +13,14 @@ if (cluster.isPrimary) {
   console.log(`Primary ${process.pid} is running`);
   console.log(`Load balancer is running on http://localhost:${PORT}/api`);
 
-
-  const numWorkers = numCPUs - 1 || 1; 
+  const numWorkers = numCPUs - 1 || 1;
   let currentWorker = 0;
 
-
   for (let i = 0; i < numWorkers; i++) {
-    const workerPort = PORT + i + 1;
+    const workerPort = parseInt(PORT) + i + 1;
     cluster.fork({ WORKER_PORT: workerPort });
     console.log(`Worker started on port ${workerPort}`);
   }
-
 
   cluster.on('exit', (worker, code, signal) => {
     console.log(`Worker ${worker.process.pid} died. Restarting...`);
@@ -31,18 +28,13 @@ if (cluster.isPrimary) {
     cluster.fork({ WORKER_PORT: workerPort });
   });
 
-
   http.createServer((req, res) => {
-
     const workers = Object.values(cluster.workers);
     
-
     const worker = workers[currentWorker];
     currentWorker = (currentWorker + 1) % workers.length;
     
-
     const workerPort = worker.process.env.WORKER_PORT;
-
 
     const options = {
       hostname: 'localhost',
@@ -67,10 +59,8 @@ if (cluster.isPrimary) {
   }).listen(PORT);
 
 } else {
-
   const workerPort = process.env.WORKER_PORT;
   
-
   app.listen(workerPort, () => {
     console.log(`Worker ${process.pid} running on port ${workerPort}`);
   });
